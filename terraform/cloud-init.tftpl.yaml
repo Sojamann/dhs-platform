@@ -1,0 +1,54 @@
+#cloud-config
+
+# Update the system on first boot
+package_update: true
+package_upgrade: true
+
+chpasswd:
+  expire: false
+  users:
+  - {name: console-admin, password: "${console_admin_password_hash}"}
+
+# Create users and groups
+users:
+  # normal admin user that allows ssh login from the outside
+  - name: admin
+    groups: sudo
+    shell: /bin/bash
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    ssh_authorized_keys:
+      - ${admin_ssh_key}
+
+  # this user does not offer a ssh login but can be used
+  # to fix something through the cloud console
+  - name: console-admin
+    groups: sudo
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    shell: /bin/bash
+
+  - name: dhs
+    shell: /bin/bash
+    groups:
+      - docker
+    ssh_authorized_keys:
+      - ${dhs_ssh_key}
+
+# Secure the SSH daemon
+write_files:
+  - path: /etc/ssh/sshd_config.d/99-custom.conf
+    content: |
+      PermitRootLogin no
+      PasswordAuthentication no
+
+# Install some packages
+packages:
+  - curl
+  - git
+  - ufw
+  - docker
+
+# Setup basic firewall
+runcmd:
+  - ufw allow 22/tcp
+  - ufw --force enable
+  - systemctl restart ssh
