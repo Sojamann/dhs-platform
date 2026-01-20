@@ -1,0 +1,72 @@
+metrics: false
+
+ui:
+  default-sort-by: group
+
+storage:
+  type: memory
+
+endpoints:
+  # INFRASTRUCTURE
+
+  - name: Server Pingable
+    group: infrastructure
+    url: icmp://{{ vault_domain }}
+    interval: 5m
+    conditions:
+      - "[CONNECTED] == true"
+
+  - name: Server SSHable
+    group: infrastructure
+    interval: 5m
+    url: tcp://{{ vault_domain }}:22
+    conditions:
+      - "[CONNECTED] == true"
+
+  - name: DNS Record
+    group: infrastructure
+    interval: 5m
+    url: "1.1.1.1"
+    dns:
+      query-name: "{{ vault_domain }}"
+      query-type: "A"
+    conditions:
+      - "[DNS_RCODE] == NOERROR"
+
+  # APP
+
+  - name: Frontend (internal)
+    group: app
+    url: "http://{{ compose_frontend_container_name }}:3000"
+    interval: 30s
+    conditions:
+      - "[STATUS] == 200"
+  - name: Frontend (external)
+    group: app
+    url: "https://{{ vault_domain }}"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+
+  - name: API (internal)
+    group: app
+    url: "http://{{ compose_backend_container_name }}:8080/actuator/health"
+    interval: 30s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].status == UP"
+
+  - name: API (external)
+    group: app
+    url: "https://{{ vault_domain }}/actuator/health"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].status == UP"
+
+  - name: DB (internal)
+    group: app
+    url: "tcp://{{ compose_db_container_name }}:5432"
+    interval: 30s
+    conditions:
+      - "[CONNECTED] == true"

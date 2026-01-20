@@ -1,0 +1,49 @@
+- name: Install DHS Application
+  hosts: all
+  become: true
+  tasks:
+    - name: Copy Gatus Config
+      ansible.builtin.template:
+        src: files/gatus.tpl.yaml
+        dest: "{{ app_dir }}/gatus.yaml"
+        mode: '0600'
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        backup: true
+
+    # this templates some variables in the compose file
+    # so that there is no mix of docker templating and
+    # ansible templating
+    - name: Copy docker-compose.yml
+      ansible.builtin.template:
+        src: files/docker-compose.tpl.yaml
+        dest: "{{ app_dir }}/docker-compose.yaml"
+        mode: '0600'
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        backup: true
+
+    - name: Validate compose file
+      become_user: "{{ app_user }}"
+      ansible.builtin.shell:
+        cmd: "docker compose config"
+        chdir: "{{ app_dir }}"
+
+- name: Starting Application
+  hosts: all
+  become: true 
+  become_user: dhs
+  tasks:
+    - name: Start Containers
+      community.docker.docker_compose_v2:
+        project_src: "{{ app_dir }}"
+        pull: always
+        build: always
+
+    - name: Schedule the backup cron job
+      ansible.builtin.cron:
+        name: "Daily Postgres Docker Backup"
+        minute: "0"
+        hour: "2"
+        user: "{{ app_user }}"
+        job: "BACKUP_SOURCE=cron {{ backup_script }} &> {{ backup_log_file}}"

@@ -1,0 +1,13 @@
+- name: Backup Database
+  hosts: all
+  become: true
+  become_user: "{{ app_user }}"
+  vars:
+    backup_path: "{{ backup_dir }}/ansible_{{ ansible_date_time.iso8601_basic }}"
+  tasks:
+    - name: Dump Database
+      environment:
+        BACKUP_SOURCE: ansible
+      ansible.builtin.shell:
+        cmd: "{{ backup_script }}"
+

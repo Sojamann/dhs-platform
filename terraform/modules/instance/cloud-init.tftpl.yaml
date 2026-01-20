@@ -1,0 +1,61 @@
+#cloud-config
+
+# Update the system on first boot
+package_update: true
+package_upgrade: true
+
+chpasswd:
+  expire: false
+  users:
+  - {name: recovery-user, password: "${recovery_user_password_hash}"}
+
+# Create users and groups
+users:
+  # account for manual logins and maintenance
+  - name: admin
+    groups: sudo
+    shell: /bin/bash
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    ssh_authorized_keys:
+      - ${admin_ssh_key}
+
+  # automation account
+  - name: ansible
+    groups: sudo
+    shell: /bin/bash
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    ssh_authorized_keys:
+      - ${ansible_ssh_key}
+
+  # user for manual fixes in the cloud console
+  - name: recovery-user
+    groups: sudo
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    shell: /bin/bash
+
+# Secure the SSH daemon
+write_files:
+  - path: /etc/ssh/sshd_config.d/99-custom.conf
+    content: |
+      PermitRootLogin no
+      PasswordAuthentication no
+      DenyUsers recovery-user
+
+# Install some packages
+packages:
+  - curl
+  - git
+  - ufw
+
+# Setup basic firewall
+runcmd:
+  - ufw default deny incoming
+  - ufw default allow outgoing
+  - ufw allow 22/tcp
+  - ufw allow 80
+  - ufw allow 443
+  - ufw --force enable
+
+  - systemctl enable ufw
+  - systemctl start ufw
+  - systemctl restart ssh

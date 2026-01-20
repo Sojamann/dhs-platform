@@ -1,0 +1,168 @@
+- name: Install Packages
+  hosts: all
+  become: true
+  tasks:
+    - name: Update Repository Index
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Install Required System Packages
+      ansible.builtin.apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+          - python3-pip
+        state: latest
+
+    - name: Add Docker GPG apt Key
+      ansible.builtin.apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker Repository
+      ansible.builtin.apt_repository:
+        repo: 'deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_facts["lsb"]["codename"] }} stable'
+        state: present
+
+    - name: Install Docker
+      ansible.builtin.apt:
+        name: 
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin  # <- do we need this ??
+          - docker-compose-plugin
+        state: latest
+        update_cache: true
+
+    - name: Ensure Docker group exists
+      ansible.builtin.group:
+        name: docker
+        state: present
+
+    - name: Ensure Docker service is started and enabled
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: true
+
+- name: Create Application User
+  hosts: all
+  become: true
+  tasks:
+    - name: Create user and add user to Docker group
+      ansible.builtin.user:
+        name: "{{ app_user }}"
+        shell: /bin/bash
+        append: true
+        groups: docker
+        # the containers started will use the same UID resulting in easy secret sharing
+        uid: 2050
+
+    - name: Login To Docker Registry
+      become_user: "{{ app_user }}"
+      community.docker.docker_login:
+        registry_url: ghcr.io
+        username: "{{ vault_docker_registry_user }}"
+        password: "{{ vault_docker_registry_password }}" 
+
+- name: Prepare Application Directory
+  hosts: all
+  become: true
+  vars:
+    target_user: "{{ ansible_user }}"
+  tasks:
+    - name: Create Target Directory
+      ansible.builtin.file:
+        path: "{{ app_dir }}"
+        mode: '0755'
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        state: directory
+
+    - name: Create Secrets Directory
+      ansible.builtin.file:
+        path: "{{ app_dir }}/secrets"
+        mode: '0700'
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        state: directory
+
+    - name: Generate DB Password
+      vars:
+        dbpass: "{{ lookup('ansible.builtin.password', '/dev/null length=20') }}"
+      ansible.builtin.copy:
+        content: "{{ dbpass }}"
+        dest: "{{ app_dir }}/secrets/dbpass"
+        mode: "0600"
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        # never override the existing password for this instance
+        force: false
+
+    - name: Generate an OpenSSL private key for JWT signing
+      community.crypto.openssl_privatekey:
+        path: "{{ app_dir }}/secrets/jwt"
+        size: 2048
+        type: RSA
+        format: pkcs8
+        mode: "0600"
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        force: false
+
+    - name: Derive OpenSSL publickKey for JWT verification
+      community.crypto.openssl_publickey:
+        path: "{{ app_dir }}/secrets/jwt.pub"
+        privatekey_path: "{{ app_dir }}/secrets/jwt"
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+
+- name: Setup Backups
+  hosts: all
+  become: true
+  vars:
+    target_user: "{{ ansible_user }}"
+  tasks:
+    - name: Create Target Directory
+      ansible.builtin.file:
+        path: "{{ backup_dir }}"
+        mode: '0755'
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        state: directory
+
+    - name: Create Backup Logs Directory
+      ansible.builtin.file:
+        path: "{{ backup_log_file }}"
+        mode: '0600'
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        state: touch
+
+    - name: Create the backup script
+      ansible.builtin.copy:
+        dest: "{{ backup_script }}"
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: '0700'
+        content: |
+          #!/bin/bash
+          source="${BACKUP_SOURCE:-manual}"
+          # Get current timestamp in ansible's 'iso8601_basic' format
+          timestamp=$(date +%Y%m%dT%H%M%S)
+          BACKUP_FILE="{{ backup_dir }}/${source}_${timestamp}"
+
+          # change due app dir as docker compose might want to look into the current
+          # working directoy potentially resulting in a permission denied error.
+          cd '{{ app_dir }}'
+          docker compose \
+            --project-directory "{{ app_dir }}" \
+            exec \
+              {{ compose_db_container_name }} \
+              pg_dump -Fc -U {{ db_username }} {{ db_name }} > "$BACKUP_FILE"
+
+          # Delete backups older than 30 days
+          find {{ backup_dir }} -type f -mtime +30 -delete

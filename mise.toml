@@ -1,0 +1,29 @@
+[env]
+ANSIBLE_CONFIG = "ansible/ansible.cfg"
+HCLOUD_TOKEN = {required = true, redact = true}
+# NOTE: this activates as soon as the venv exists
+_.source = ".venv/bin/activate"
+
+[tools]
+terraform = "1"
+terraform-ls = "latest"
+# NOTE: ansible is installed through the requirements.txt file since the
+#       mise install of ansible does not play well together with the venv
+
+[tasks.init]
+run = '''
+uv venv --allow-existing
+source .venv/bin/activate
+# install stuff for ansible (including ansible itself)
+uv pip install -r requirements.txt
+ansible-galaxy collection install -r ansible/requirements.yaml
+# setup terraform
+terraform -chdir=terraform init --upgrade
+'''
+
+# TODO: this is somewhat inconsistent to have one for terraform but not one for ansible
+[tasks.terraform]
+description = "Run Terraform Command"
+dir = "terraform"
+run = "terraform"
+env = { TF_VAR_hcloud_token = "{{env.HCLOUD_TOKEN}}", redact = true }
