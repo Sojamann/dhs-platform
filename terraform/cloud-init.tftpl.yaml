@@ -49,6 +49,13 @@ packages:
 
 # Setup basic firewall
 runcmd:
+  - ufw default deny incoming
+  - ufw default allow outgoing
   - ufw allow 22/tcp
+  - ufw allow 80
+  - ufw allow 443
   - ufw --force enable
+
+  - systemctl enable ufw
+  - systemctl start ufw
   - systemctl restart ssh

@@ -59,6 +59,75 @@ resource "hcloud_ssh_key" "root" {
   public_key = var.root_ssh_key
 }
 
+resource "hcloud_firewall" "server" {
+  name = "server-wall"
+
+  rule {
+    description = "allow ICMP (ping)"
+    direction = "in"
+    protocol  = "icmp"
+    source_ips = [
+      "0.0.0.0/0",
+      "::/0"
+    ]
+  }
+
+  rule {
+    description = "allow SSH access"
+    direction = "in"
+    protocol  = "tcp"
+    port      = "22"
+    source_ips = [
+      "0.0.0.0/0",
+      "::/0"
+    ]
+  }
+
+  rule {
+    description = "allow standard UDP traffic on port 80"
+    direction = "in"
+    protocol  = "udp"
+    port      = "80"
+    source_ips = [
+      "0.0.0.0/0",
+      "::/0"
+    ]
+  }
+
+  rule {
+    description = "allow standard TCP traffic on port 80"
+    direction = "in"
+    protocol  = "tcp"
+    port      = "80"
+    source_ips = [
+      "0.0.0.0/0",
+      "::/0"
+    ]
+  }
+
+  rule {
+    description = "allow standard UDP traffic on port 443"
+    direction = "in"
+    protocol  = "udp"
+    port      = "443"
+    source_ips = [
+      "0.0.0.0/0",
+      "::/0"
+    ]
+  }
+
+  rule {
+    description = "allow standard TCP traffic on port 443"
+    direction = "in"
+    protocol  = "tcp"
+    port      = "443"
+    source_ips = [
+      "0.0.0.0/0",
+      "::/0"
+    ]
+  }
+}
+
 resource "hcloud_server" "server" {
   name        = "server"
   image       = "ubuntu-24.04"
@@ -68,6 +137,7 @@ resource "hcloud_server" "server" {
   user_data = data.cloudinit_config.config.rendered
   shutdown_before_deletion = true
   ssh_keys = [hcloud_ssh_key.root.id] # not used but we don't want a email from hetzner
+  firewall_ids = [hcloud_firewall.server.id]
 
   public_net {
     ipv4_enabled = true
