@@ -1,31 +1,12 @@
+[env]
+HCLOUD_TOKEN = {required = true}
+
 [tools]
 terraform = "1"
 terraform-ls = "latest"
+# NOTE: ansible is installed through the requirements.txt file since the
+#       mise install of ansible does not play well together with the venv
 
-[tasks."terraform:init"]
-description = "Initializes a Terraform working directory"
-run = "terraform -chdir=terraform init"
-
-[tasks."terraform:plan"]
-description = "Generates an execution plan for Terraform"
-run = "terraform -chdir=terraform plan"
-
-[tasks."terraform:apply"]
-description = "Applies the changes required to reach the desired state of the configuration"
-run = "terraform -chdir=terraform apply"
-
-[tasks."terraform:destroy"]
-description = "Destroy Terraform-managed infrastructure"
-run = "terraform -chdir=terraform destroy"
-
-[tasks."terraform:validate"]
-description = "Validates the Terraform files"
-run = "terraform -chdir=terraform validate"
-
-[tasks."terraform:format"]
-description = "Formats the Terraform files"
-run = "terraform -chdir=terraform fmt"
-
-[tasks."terraform:check"]
-description = "Checks the Terraform files"
-depends = ["terraform:format", "terraform:validate"]
+[tasks."terraform"]
+description = "Run Terraform Command"
+run = "terraform -chdir=terraform"

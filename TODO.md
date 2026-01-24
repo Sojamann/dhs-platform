@@ -1,0 +1,3 @@
+- distribute ssh keys
+- install software playbook
+- how to make all of this reusable to setup a server and install everything like: do prod, do staging

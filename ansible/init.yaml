@@ -1,0 +1,57 @@
+- name: Initialize Server
+  hosts: all
+  become: true
+  vars:
+    target_user: "{{ ansible_user }}"
+  tasks:
+    - name: Update Repository Index
+      apt:
+        update_cache: true
+
+    - name: Install Required System Packages
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+          - python3-pip
+        state: latest
+
+    - name: Add Docker GPG apt Key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker Repository
+      apt_repository:
+        repo: 'deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_facts["lsb"]["codename"] }} stable'
+        state: present
+
+    - name: Install Docker
+      apt:
+        name: 
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin  # <- do we need this ??
+          - docker-compose-plugin
+        state: latest
+        update_cache: true
+
+    - name: Ensure Docker group exists
+      group:
+        name: docker
+        state: present
+
+    - name: Add user to Docker group
+      user:
+        name: dhs
+        groups: docker
+        append: true
+
+    - name: Ensure Docker service is started and enabled
+      systemd:
+        name: docker
+        state: started
+        enabled: true

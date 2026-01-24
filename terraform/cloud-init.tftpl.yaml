@@ -28,8 +28,6 @@ users:
 
   - name: dhs
     shell: /bin/bash
-    groups:
-      - docker
     ssh_authorized_keys:
       - ${dhs_ssh_key}
 

@@ -145,6 +145,10 @@ resource "hcloud_server" "server" {
     ipv6_enabled = false
   }
 
+  labels = {
+    role : "server"
+  }
+
   # no automatic destruction of the server given changes:
   lifecycle {
     ignore_changes = [ssh_keys, user_data]
