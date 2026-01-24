@@ -1,14 +1,21 @@
 
+
 ## Getting Started
+Provide the Hetzner API Token through an env variable on the shell
 ```
 export HCLOUD_TOKEN='<the token>'
+```
+or though the mise.local.toml file
+```toml
+[env]
+HCLOUD_TOKEN = "<the token>"
+```
 
-mise r install
-uv venv
-source .venv/bin/activate
-uv pip install -r requirements.txt
+install dependencies
+```sh
+# download the terraform tooling
+mise install
 
-ansible-galaxy collection install -r ansible/collections/requirements.yam
-
-mise run terraform init --upgrade
+# install ansible tooling (including python deps ...)
+mise run init
 ```
