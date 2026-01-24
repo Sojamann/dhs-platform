@@ -45,7 +45,6 @@ packages:
   - curl
   - git
   - ufw
-  - docker
 
 # Setup basic firewall
 runcmd:
