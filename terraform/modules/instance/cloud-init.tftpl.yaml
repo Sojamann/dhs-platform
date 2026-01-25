@@ -7,11 +7,11 @@ package_upgrade: true
 chpasswd:
   expire: false
   users:
-  - {name: console-admin, password: "${console_admin_password_hash}"}
+  - {name: recovery-user, password: "${recovery_user_password_hash}"}
 
 # Create users and groups
 users:
-  # normal admin user that allows ssh login from the outside
+  # account for manual logins and maintenance
   - name: admin
     groups: sudo
     shell: /bin/bash
@@ -19,17 +19,19 @@ users:
     ssh_authorized_keys:
       - ${admin_ssh_key}
 
-  # this user does not offer a ssh login but can be used
-  # to fix something through the cloud console
-  - name: console-admin
+  # automation account
+  - name: ansible
+    groups: sudo
+    shell: /bin/bash
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    ssh_authorized_keys:
+      - ${ansible_ssh_key}
+
+  # user for manual fixes in the cloud console
+  - name: recovery-user
     groups: sudo
     sudo: ['ALL=(ALL) NOPASSWD:ALL']
     shell: /bin/bash
-
-  - name: dhs
-    shell: /bin/bash
-    ssh_authorized_keys:
-      - ${dhs_ssh_key}
 
 # Secure the SSH daemon
 write_files:
@@ -37,6 +39,7 @@ write_files:
     content: |
       PermitRootLogin no
       PasswordAuthentication no
+      DenyUsers recovery-user
 
 # Install some packages
 packages:

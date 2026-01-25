@@ -1,2 +1,4 @@
 plugin: hetzner.hcloud.hcloud
-label_selector: role=server
+
+keyed_groups:
+  - key: labels.environment

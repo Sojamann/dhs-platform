@@ -1,3 +1,5 @@
 collections:
   - name: hetzner.hcloud
     version: ">=6.5,<7"
+  - name: ansible.posix
+    version: ">=2.1,<3"

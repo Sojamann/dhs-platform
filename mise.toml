@@ -1,5 +1,5 @@
 [env]
-HCLOUD_TOKEN = {required = true}
+HCLOUD_TOKEN = {required = true, redact = true}
 # NOTE: this activates as soon as the venv exists
 _.source = ".venv/bin/activate"
 
@@ -11,16 +11,20 @@ terraform-ls = "latest"
 
 [tasks.init]
 run = '''
-  uv venv --allow-existing
-  uv pip install -r requirements.txt
-  source .venv/bin/activate
-  ansible-galaxy collection install -r ansible/collections/requirements.yaml
+uv venv --allow-existing
+source .venv/bin/activate
+# install stuff for ansible (including ansible itself)
+uv pip install -r requirements.txt
+ansible-galaxy collection install -r ansible/collections/requirements.yaml
+# setup terraform
+terraform -chdir=terraform init --upgrade
 '''
 
 [tasks.terraform]
 description = "Run Terraform Command"
 dir = "terraform"
 run = "terraform"
+env = { TF_VAR_hcloud_token = "{{env.HCLOUD_TOKEN}}", redact = true }
 
 [tasks.ansible]
 description = "Run Ansible-Playbook Command"
