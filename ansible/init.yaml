@@ -5,11 +5,11 @@
     target_user: "{{ ansible_user }}"
   tasks:
     - name: Update Repository Index
-      apt:
+      ansible.builtin.apt:
         update_cache: true
 
     - name: Install Required System Packages
-      apt:
+      ansible.builtin.apt:
         name:
           - apt-transport-https
           - ca-certificates
@@ -19,17 +19,17 @@
         state: latest
 
     - name: Add Docker GPG apt Key
-      apt_key:
+      ansible.builtin.apt_key:
         url: https://download.docker.com/linux/ubuntu/gpg
         state: present
 
     - name: Add Docker Repository
-      apt_repository:
+      ansible.builtin.apt_repository:
         repo: 'deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_facts["lsb"]["codename"] }} stable'
         state: present
 
     - name: Install Docker
-      apt:
+      ansible.builtin.apt:
         name: 
           - docker-ce
           - docker-ce-cli
@@ -40,18 +40,18 @@
         update_cache: true
 
     - name: Ensure Docker group exists
-      group:
+      ansible.builtin.group:
         name: docker
         state: present
 
     - name: Add user to Docker group
-      user:
+      ansible.builtin.user:
         name: dhs
         groups: docker
         append: true
 
     - name: Ensure Docker service is started and enabled
-      systemd:
+      ansible.builtin.systemd:
         name: docker
         state: started
         enabled: true
