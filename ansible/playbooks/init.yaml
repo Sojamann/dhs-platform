@@ -44,7 +44,7 @@
         name: docker
         state: present
 
-    - name: Add user to Docker group
+    - name: Create user and add user to Docker group
       ansible.builtin.user:
         name: dhs
         groups: docker
