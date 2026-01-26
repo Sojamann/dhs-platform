@@ -37,3 +37,17 @@ It creates:
 mise run terraform plan
 mise run terraform apply
 ```
+
+### Initialize Server
+Ansible is used to initialize the server which incluides:
+- create the dhs user
+- install docker
+
+```sh
+mise run ansible --inventory ansible/inventories/prod/inventory.hcloud.yaml ./ansible/playbooks/init.yaml
+```
+
+## Maintenance
+There are currently two ansible playbooks for maintenance.
+- `distribute-ssh-keys.yaml` is used to update the users with new ssh keys for ssh login
+- `update.yaml` is used to update the packages on the server
