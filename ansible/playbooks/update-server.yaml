@@ -1,0 +1,10 @@
+- name: Update Server
+  hosts: all
+  become: true
+  vars:
+    target_user: "{{ ansible_user }}"
+  tasks:
+    - name: Update Index and Packages
+      ansible.builtin.apt:
+        update_cache: true
+        upgrade: safe

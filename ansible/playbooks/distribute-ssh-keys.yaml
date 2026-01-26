@@ -12,6 +12,15 @@
     loop:
      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOZJFz4J03b9gTiglxNzR2oiWqFNhPxPO+eq7DHl+fIC robin
 
+  - name: Transfer trusted keys for ansible
+    become: true
+    ansible.posix.authorized_key:
+      user: ansible
+      state: present
+      key: '{{ item }}'
+    loop:
+     - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOZJFz4J03b9gTiglxNzR2oiWqFNhPxPO+eq7DHl+fIC robin
+
   - name: Transfer trusted keys for dhs
     become: true
     ansible.posix.authorized_key:
