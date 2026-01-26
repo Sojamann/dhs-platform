@@ -1,4 +1,0 @@
-plugin: hetzner.hcloud.hcloud
-
-keyed_groups:
-  - key: labels.environment
