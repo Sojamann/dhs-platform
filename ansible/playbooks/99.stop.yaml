@@ -1,0 +1,14 @@
+- name: Stop Application
+  hosts: all
+  become: true 
+  become_user: dhs
+  tasks:
+    - name: Start Containers
+      community.docker.docker_compose_v2:
+        project_src: "{{ app_dir }}"
+        state: absent
+
+    - name: Stop the backup job
+      ansible.builtin.cron:
+        name: "Daily Postgres Docker Backup"
+        state: absent

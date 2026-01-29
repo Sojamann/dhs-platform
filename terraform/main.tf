@@ -33,6 +33,10 @@ module "prod" {
   admin_ssh_key = var.admin_ssh_key
   ansible_ssh_key = var.ansible_ssh_key
 }
+output "prod_ip" {
+  description = "The public IP address of the prod instance"
+  value       = module.prod.public_ip
+}
 
 # EXAMPLE:
 # module "staging" {

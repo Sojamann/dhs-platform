@@ -1,4 +1,5 @@
 [env]
+ANSIBLE_CONFIG = "ansible/ansible.cfg"
 HCLOUD_TOKEN = {required = true, redact = true}
 # NOTE: this activates as soon as the venv exists
 _.source = ".venv/bin/activate"
@@ -20,13 +21,9 @@ ansible-galaxy collection install -r ansible/requirements.yaml
 terraform -chdir=terraform init --upgrade
 '''
 
+# TODO: this is somewhat inconsistent to have one for terraform but not one for ansible
 [tasks.terraform]
 description = "Run Terraform Command"
 dir = "terraform"
 run = "terraform"
 env = { TF_VAR_hcloud_token = "{{env.HCLOUD_TOKEN}}", redact = true }
-
-[tasks.ansible]
-description = "Run Ansible-Playbook Command"
-env = { ANSIBLE_CONFIG = "ansible/ansible.cfg" }
-run = "ansible-playbook"

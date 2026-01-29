@@ -1,14 +1,20 @@
 
 
 ## Getting Started
-Provide the Hetzner API Token through an env variable on the shell
+The project needs two secrets to work:
+1. a hetzner api token
+2. the ansible vault password
+
+which can be provided using a shell variable
 ```
 export HCLOUD_TOKEN='<the token>'
+export ANSIBLE_VAULT_PASSWORD='<the password>'
 ```
 or though the mise.local.toml file
 ```toml
 [env]
 HCLOUD_TOKEN = "<the token>"
+ANSIBLE_VAULT_PASSWORD = "<the password>"
 ```
 
 install dependencies
@@ -44,10 +50,9 @@ Ansible is used to initialize the server which incluides:
 - install docker
 
 ```sh
-mise run ansible --inventory ansible/inventories/prod/inventory.hcloud.yaml ./ansible/playbooks/init.yaml
+ansible-playbook \
+    --inventory ansible/inventories/prod/ \
+    ./ansible/playbooks/1.init.yaml
 ```
 
-## Maintenance
-There are currently two ansible playbooks for maintenance.
-- `distribute-ssh-keys.yaml` is used to update the users with new ssh keys for ssh login
-- `update.yaml` is used to update the packages on the server
+TODO: explain other files

@@ -1,0 +1,14 @@
+# do change those
+domain: localhost   # the domain that the application will serve for
+version: latest     # software version to use (latest or tag of backend and frontend)
+
+# do not change those
+app_dir: "/opt/app"   # location where the compose file and secrets will be stored
+app_user: dhs         # name of the user who own's the application related files
+
+backup_dir: "/var/lib/dhs-backup"                 # location of all backups
+backup_script: "/usr/local/bin/dhs-pg-backup.sh"  # location of the backup script
+
+compose_db_container_name: db # name of the database server container
+db_username: postgres         # name of the database user for authentication
+db_name: postgres             # name of the database

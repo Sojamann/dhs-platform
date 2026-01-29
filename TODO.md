@@ -1,1 +1,2 @@
-- install software playbook
+- test
+- go over TODOs
