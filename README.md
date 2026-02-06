@@ -44,11 +44,12 @@ It creates:
 per environment when running:
 
 ```sh
+# you might need to login prior to running any other commands
+mise run terraform login
+
 mise run terraform plan
 mise run terraform apply
 ```
-
-> the terraform state will be stored only locally!
 
 ### DNS Configuration
 DNS configuration must be done manually and is expected to be setup like so:

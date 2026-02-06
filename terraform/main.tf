@@ -1,4 +1,10 @@
 terraform {
+  cloud {
+    organization = "dhs-ffsued"
+    workspaces {
+      name = "dhs"
+    }
+  }
   required_providers {
     hcloud = {
       source  = "hetznercloud/hcloud"
