@@ -83,6 +83,8 @@ services:
         }
 
         monitoring.{{ vault_domain }} {
+          import /run/secrets/caddy-gatus-auth
+
           reverse_proxy gatus:8080
         }
         EOF
@@ -99,6 +101,8 @@ services:
       - backend
     networks:
       - app-network
+    secrets:
+      - caddy-gatus-auth
 
 secrets:
   db-password:
@@ -107,6 +111,8 @@ secrets:
     file: ./secrets/jwt
   jwt-public-key:
     file: ./secrets/jwt.pub
+  caddy-gatus-auth:
+    file: ./secrets/caddy-gatus-auth
 networks:
   app-network:
   db:

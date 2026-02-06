@@ -72,7 +72,8 @@
   hosts: all
   become: true
   vars:
-    target_user: "{{ ansible_user }}"
+    gatus_pass: "{{ lookup('ansible.builtin.password', '/dev/null length=20') }}"
+    db_pass: "{{ lookup('ansible.builtin.password', '/dev/null length=20') }}"
   tasks:
     - name: Create Target Directory
       ansible.builtin.file:
@@ -91,10 +92,8 @@
         state: directory
 
     - name: Generate DB Password
-      vars:
-        dbpass: "{{ lookup('ansible.builtin.password', '/dev/null length=20') }}"
       ansible.builtin.copy:
-        content: "{{ dbpass }}"
+        content: "{{ db_pass }}"
         dest: "{{ app_dir }}/secrets/dbpass"
         mode: "0600"
         owner: "{{ app_user }}"
@@ -119,6 +118,29 @@
         privatekey_path: "{{ app_dir }}/secrets/jwt"
         owner: "{{ app_user }}"
         group: "{{ app_user }}"
+
+    - name: Write Gatus Credentials To File
+      ansible.builtin.copy:
+        content: '{{ gatus_pass }}'
+        dest: "{{ app_dir }}/secrets/gatus-credentials"
+        mode: "0600"
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        # never override the existing password for this instance
+        force: false
+
+    - name: Generate Gatus's Auth Snippet for Caddy
+      ansible.builtin.copy:
+        content: |
+          basic_auth {
+            admin {{ gatus_pass | password_hash(hashtype='bcrypt', salt='aasd8hqds82hkalkjwlasj') }}
+          }
+        dest: "{{ app_dir }}/secrets/caddy-gatus-auth"
+        mode: "0600"
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        # never override the existing password for this instance
+        force: false
 
 - name: Setup Backups
   hosts: all
