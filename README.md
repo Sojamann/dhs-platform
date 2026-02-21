@@ -30,6 +30,8 @@ mise install
 mise run init
 ```
 
+> ensure that the running ssh-agent has your key
+
 ## Deployment
 ### Terraform Deployment
 Firstly use terraform to create the infrastructure defined in `terraform/main.tf`.
